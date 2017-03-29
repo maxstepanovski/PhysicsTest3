@@ -39,11 +39,10 @@ public class MyGdxGame extends ApplicationAdapter {
 	SpriteBatch batch;
 	Box2DDebugRenderer renderer;
 	World world;
-	Stage stage;
-	TextButton resetButton;
 
-	private BitmapFont arialFont;
-	private GlyphLayout layout;
+	Stage stage;
+	Random random;
+	Label label;
 
 	@Override
 	public void create () {
@@ -63,28 +62,13 @@ public class MyGdxGame extends ApplicationAdapter {
 		camera.update();
 		factory = new ObjectFactory(world);
 		gameLogicManager = new GameLogicManager(world, camera);
-
 		gameLogicManager.newGame();
 
-		stage = new Stage();
-		Gdx.input.setInputProcessor(stage);
-		resetButton = factory.createButton("Reset", w-100, h-50);
-		resetButton.addListener(new ChangeListener() {
-			@Override
-			public void changed(ChangeEvent event, Actor actor) {
-				gameLogicManager.endGame();
-				gameLogicManager.newGame();
-			}
-		});
-		stage.addActor(resetButton);
-		arialFont = new BitmapFont(Gdx.files.internal("arial.fnt"));
-		Label label = new Label("LOL", new Label.LabelStyle(arialFont, Color.CYAN));
-		stage.addActor(label);
 	}
 
 	@Override
 	public void render () {
-		if(Gdx.input.isTouched() && !resetButton.isPressed()){
+		if(Gdx.input.isTouched()){
 			gameLogicManager.handleInput();
 		}
 		gameLogicManager.checkBoarders();
@@ -96,7 +80,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		batch.begin();
 
-		stage.draw();
+		gameLogicManager.updateHUD();
 		renderer.render(world, camera.combined);
 
 		batch.end();

@@ -10,6 +10,9 @@ import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 /**
  * Created by макс on 28.03.2017.
  */
@@ -22,7 +25,7 @@ public class GameLogicManager {
     private Array<BuildingBlock> blocks;
     private Body ground, leftWall, rightWall;
     private ObjectFactory factory;
-    private TextManager textManager;
+    private HUDManager hudManager;
     private int blockCounter;
     private boolean newGameNeeded;
 
@@ -31,7 +34,7 @@ public class GameLogicManager {
         this.world = world;
         this.camera = camera;
         this.factory = new ObjectFactory(world);
-        this.textManager = new TextManager();
+        this.hudManager = new HUDManager(camera);
         this.newGameNeeded = false;
         blocks = new Array<BuildingBlock>();
         blockCounter = 0;
@@ -164,7 +167,26 @@ public class GameLogicManager {
         this.newGameNeeded = newGameNeeded;
     }
 
-    public void showBlockCount(Batch batch){
-        textManager.displayText("blocks: "+blockCounter, Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()/2, batch);
+    public void updateHUD(){
+        int placedBlockCounter = 0;
+        float maxHeight = 0;
+        for(BuildingBlock block: blocks){
+            if(block.isPlaced()){
+                placedBlockCounter++;
+                if(block.getBody().getPosition().y > maxHeight)
+                    maxHeight = block.getBody().getPosition().y;
+            }
+        }
+        hudManager.updateStatisticsHUD((float) round(maxHeight,1), placedBlockCounter);
+        hudManager.draw();
     }
+
+    public static double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(places, RoundingMode.HALF_UP);
+        return bd.doubleValue();
+    }
+
 }
