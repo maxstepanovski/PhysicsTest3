@@ -179,7 +179,7 @@ public class GameLogicManager {
                     maxHeight = block.getBody().getPosition().y;
             }
         }
-        textManager.updateStatistics(maxHeight, blockCounter-1);
+        textManager.updateStatistics(maxHeight, placedBlockCounter);
         textManager.drawStatistics(batch);
     }
 

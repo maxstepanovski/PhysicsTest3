@@ -1,12 +1,9 @@
 package com.mamabayamba.physicstest3;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.utils.Array;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -21,8 +18,7 @@ public class TextManager {
 
     public TextManager() {
         padding = MyGdxGame.pixelsInMeters;
-        plainFont = new BitmapFont(Gdx.files.internal("arial16.fnt"));
-        plainFont.setColor(Color.BLACK);
+        plainFont = new BitmapFont(Gdx.files.internal("gamefont.fnt"));
         towerHeight = new GlyphLayout();
         blocks = new GlyphLayout();
     }
