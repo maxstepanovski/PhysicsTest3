@@ -33,6 +33,7 @@ public class GameLogicManager {
     private Sprite background;
     private BuildingBlock flyingIsland, startingIsland;
     private ObjectFactory factory;
+    private TextManager textManager;
     private int blockCounter;
     private boolean newGameNeeded;
 
@@ -41,6 +42,7 @@ public class GameLogicManager {
         this.world = world;
         this.camera = camera;
         this.factory = new ObjectFactory(world, camera);
+        this.textManager = new TextManager();
         this.newGameNeeded = false;
         blocks = new Array<BuildingBlock>();
         miscellaneous = new Array<BuildingBlock>();
@@ -167,7 +169,7 @@ public class GameLogicManager {
         this.newGameNeeded = newGameNeeded;
     }
 
-    public void updateHUD(){
+    public void updateHUD(SpriteBatch batch){
         int placedBlockCounter = 0;
         float maxHeight = 0;
         for(BuildingBlock block: blocks){
@@ -177,14 +179,8 @@ public class GameLogicManager {
                     maxHeight = block.getBody().getPosition().y;
             }
         }
-    }
-
-    public static double round(double value, int places) {
-        if (places < 0) throw new IllegalArgumentException();
-
-        BigDecimal bd = new BigDecimal(value);
-        bd = bd.setScale(places, RoundingMode.HALF_UP);
-        return bd.doubleValue();
+        textManager.updateStatistics(maxHeight, blockCounter-1);
+        textManager.drawStatistics(batch);
     }
 
     public void drawTextures(SpriteBatch batch){

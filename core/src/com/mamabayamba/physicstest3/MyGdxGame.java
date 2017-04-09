@@ -2,8 +2,11 @@ package com.mamabayamba.physicstest3;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.ParticleEffectPool;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -16,20 +19,25 @@ import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 
 public class MyGdxGame extends ApplicationAdapter implements ContactListener {
 	public static final float X_METERS = 40;
-	public static float yMeters;
+    public static float yMeters;
 	public static float pixelsInMeters;
 	public static float w, h;
 	public static OrthographicCamera camera;
-	ObjectFactory factory;
-	GameLogicManager gameLogicManager;
-    EffectManager effectManager;
-	SpriteBatch batch;
-	Box2DDebugRenderer renderer;
-	World world;
+	private ObjectFactory factory;
+	private GameLogicManager gameLogicManager;
+    private EffectManager effectManager;
+    private SpriteBatch batch;
+    private Box2DDebugRenderer renderer;
+    private World world;
+    private float padding;
+
+    private BitmapFont font;
+    private GlyphLayout layout;
 
 	@Override
 	public void create () {
@@ -41,6 +49,7 @@ public class MyGdxGame extends ApplicationAdapter implements ContactListener {
 		w = Gdx.graphics.getWidth();
 		h = Gdx.graphics.getHeight();
 		pixelsInMeters = w / X_METERS;
+        padding = pixelsInMeters;
 		yMeters = h / pixelsInMeters;
 		Gdx.app.log("happy: ", X_METERS+"; "+yMeters);
 		camera = new OrthographicCamera(w/ pixelsInMeters, (h/ pixelsInMeters));
@@ -51,7 +60,6 @@ public class MyGdxGame extends ApplicationAdapter implements ContactListener {
         effectManager = new EffectManager();
         world.setContactListener(this);
 		gameLogicManager.newGame();
-
 	}
 
 	@Override
@@ -71,6 +79,7 @@ public class MyGdxGame extends ApplicationAdapter implements ContactListener {
 
         gameLogicManager.drawTextures(batch);
         effectManager.drawEffects(batch);
+        gameLogicManager.updateHUD(batch);
 
 		batch.end();
 		////
