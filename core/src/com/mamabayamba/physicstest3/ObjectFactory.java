@@ -1,7 +1,10 @@
 package com.mamabayamba.physicstest3;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -21,13 +24,15 @@ import java.util.Random;
 
 public class ObjectFactory {
     private World world;
+    private Camera camera;
     private Texture flyingIslandTexture;
     private TextureRegion sandTile, cosmoTile, whiteTile;
     private TextureRegion[][] sandRegions, cosmoRegions, whiteRegions;
     private float pixelsInMeters;
 
-    public ObjectFactory(World world){
+    public ObjectFactory(World world, Camera camera){
         this.world = world;
+        this.camera = camera;
         this.pixelsInMeters = MyGdxGame.pixelsInMeters;
         this.sandTile = new TextureRegion(new Texture(Gdx.files.internal("sand_tile.png")));
         this.cosmoTile = new TextureRegion(new Texture(Gdx.files.internal("cosmo_tile.png")));
@@ -57,25 +62,27 @@ public class ObjectFactory {
         fixtureDefinition.friction = 0.9f;
         Fixture fixture = body.createFixture(fixtureDefinition);
         polygon.dispose();
-        Image image;
+        Sprite sprite;
 
         switch(random.nextInt(2)){
             case 0:
-                image = new Image(sandRegions[random.nextInt(2)][random.nextInt(2)]);
+                sprite = new Sprite(sandRegions[random.nextInt(2)][random.nextInt(2)]);
                 break;
             case 1:
-                image = new Image(cosmoRegions[random.nextInt(2)][random.nextInt(2)]);
+                sprite = new Sprite(cosmoRegions[random.nextInt(2)][random.nextInt(2)]);
                 break;
             case 2:
-                image = new Image(whiteRegions[random.nextInt(2)][random.nextInt(2)]);
+                sprite = new Sprite(whiteRegions[random.nextInt(2)][random.nextInt(2)]);
                 break;
             default:
-                image = new Image(whiteRegions[random.nextInt(2)][random.nextInt(2)]);
+                sprite = new Sprite(whiteRegions[random.nextInt(2)][random.nextInt(2)]);
                 break;
         }
 
-        image.setSize(2*width*pixelsInMeters, 2*height*pixelsInMeters);
-        BuildingBlock block = new BuildingBlock(body, image);
+        sprite.setSize(2*width*pixelsInMeters, 2*height*pixelsInMeters);
+        sprite.setPosition(body.getPosition().x-sprite.getWidth()/2, body.getPosition().y-sprite.getHeight()/2);
+        sprite.setOriginCenter();
+        BuildingBlock block = new BuildingBlock(body, sprite, camera);
         return block;
     }
 
@@ -97,12 +104,18 @@ public class ObjectFactory {
         Fixture fixture = body.createFixture(fixtureDef);
         polygon.dispose();
 
-        Image image = new Image(flyingIslandTexture);
-        image.setSize(2*xWidth*pixelsInMeters, 2*yHeight*pixelsInMeters);
+        Sprite sprite = new Sprite(flyingIslandTexture);
+        sprite.setSize(2*xWidth*pixelsInMeters, 2*yHeight*pixelsInMeters);
         Vector3 position = new Vector3(body.getPosition().x, body.getPosition().y, 0);
         MyGdxGame.camera.project(position);
-        image.setPosition(position.x-image.getWidth()/2, position.y-image.getHeight()/2);
-        BuildingBlock block = new BuildingBlock(body, image);
+        sprite.setPosition(position.x-sprite.getWidth()/2, position.y-sprite.getHeight()/2);
+        BuildingBlock block = new BuildingBlock(body, sprite, camera);
         return block;
+    }
+
+    public ParticleEffect createEffect(){
+        ParticleEffect dust = new ParticleEffect();
+        dust.load(Gdx.files.internal("dust.p"), Gdx.files.internal(""));
+        return dust;
     }
 }

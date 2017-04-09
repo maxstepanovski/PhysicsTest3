@@ -3,11 +3,15 @@ package com.mamabayamba.physicstest3;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Contact;
+import com.badlogic.gdx.physics.box2d.ContactImpulse;
+import com.badlogic.gdx.physics.box2d.ContactListener;
+import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
 
@@ -26,9 +30,9 @@ public class GameLogicManager {
     private Camera camera;
     private Array<BuildingBlock> blocks;
     private Array<BuildingBlock> miscellaneous;
+    private Sprite background;
     private BuildingBlock flyingIsland, startingIsland;
     private ObjectFactory factory;
-    private VisualManager visualManager;
     private int blockCounter;
     private boolean newGameNeeded;
 
@@ -36,13 +40,15 @@ public class GameLogicManager {
     public GameLogicManager(World world, Camera camera){
         this.world = world;
         this.camera = camera;
-        this.factory = new ObjectFactory(world);
-        this.visualManager = new VisualManager(camera);
+        this.factory = new ObjectFactory(world, camera);
         this.newGameNeeded = false;
         blocks = new Array<BuildingBlock>();
         miscellaneous = new Array<BuildingBlock>();
         blockCounter = 0;
         startingPosition = new Vector2(camera.viewportWidth/2 + 15, 5);
+        this.background = new Sprite(new Texture(Gdx.files.internal("sky.png")));
+        this.background.setPosition(0,0);
+        this.background.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
     public void newGame(){
@@ -56,7 +62,6 @@ public class GameLogicManager {
         miscellaneous.add(flyingIsland);
         startingIsland = factory.createGround(startingPosition.x, 0, 2, 1);
         miscellaneous.add(startingIsland);
-        visualManager.createStatisticsHUD();
     }
 
     public void endGame(){
@@ -71,21 +76,22 @@ public class GameLogicManager {
         if(miscellaneous.size > 0)
             miscellaneous.clear();
         blockCounter = 0;
-        visualManager.dispose();
     }
 
     public void checkIfAllBlocksPlaced(){
         Array<Contact> contacts = world.getContactList();
         boolean onStartingPosition = false;
         BuildingBlock controlledBlock = blocks.get(blockCounter-1);
-        for(Contact contact: contacts){
-            if( (contact.getFixtureA().getBody().equals(controlledBlock.getBody()) || contact.getFixtureB().getBody().equals(controlledBlock.getBody()) ) &&
-                    (contact.getFixtureA().getBody().equals(startingIsland.getBody()) || contact.getFixtureB().getBody().equals(startingIsland.getBody())) ){
-                onStartingPosition = true;
+        if(!controlledBlock.getBody().isAwake()){
+            for(Contact contact: contacts){
+                if( (contact.getFixtureA().getBody().equals(controlledBlock.getBody()) || contact.getFixtureB().getBody().equals(controlledBlock.getBody()) ) &&
+                        (contact.getFixtureA().getBody().equals(startingIsland.getBody()) || contact.getFixtureB().getBody().equals(startingIsland.getBody())) ){
+                    onStartingPosition = true;
+                }
             }
-        }
-        if(!controlledBlock.getBody().isAwake() && !onStartingPosition){
-            controlledBlock.setPlaced(true);
+            if(!onStartingPosition){
+                controlledBlock.setPlaced(true);
+            }
         }
     }
 
@@ -171,7 +177,6 @@ public class GameLogicManager {
                     maxHeight = block.getBody().getPosition().y;
             }
         }
-        visualManager.updateStatisticsHUD((float) round(maxHeight,1), placedBlockCounter);
     }
 
     public static double round(double value, int places) {
@@ -182,13 +187,13 @@ public class GameLogicManager {
         return bd.doubleValue();
     }
 
-    public void updateTextures(){
-        visualManager.updateVisuals(miscellaneous);
-        visualManager.updateVisuals(blocks);
+    public void drawTextures(SpriteBatch batch){
+        background.draw(batch);
+        for(BuildingBlock block: miscellaneous){
+            block.getActualSprite().draw(batch);
+        }
+        for(BuildingBlock block: blocks){
+            block.getActualSprite().draw(batch);
+        }
     }
-
-    public void drawVisuals(){
-        visualManager.draw();
-    }
-
 }
