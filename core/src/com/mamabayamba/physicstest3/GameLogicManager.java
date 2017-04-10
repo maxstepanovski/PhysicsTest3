@@ -9,14 +9,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Contact;
-import com.badlogic.gdx.physics.box2d.ContactImpulse;
-import com.badlogic.gdx.physics.box2d.ContactListener;
-import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 /**
  * Created by макс on 28.03.2017.
@@ -51,6 +45,7 @@ public class GameLogicManager {
         this.background = new Sprite(new Texture(Gdx.files.internal("sky.png")));
         this.background.setPosition(0,0);
         this.background.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
     }
 
     public void newGame(){
@@ -117,25 +112,22 @@ public class GameLogicManager {
             blocks.add(factory.createBlock(startingPosition.x, startingPosition.y));
             blockCounter++;
         }
+        if(placedBlocks%2 == 0){
+            textManager.setBlockSign(placedBlocks);
+        }
     }
 
     public void checkBoarders(){
-        Body controlledBlock = blocks.get(blockCounter-1).getBody();
-        float currentX = controlledBlock.getPosition().x;
-        float currentY = controlledBlock.getPosition().y;
-        float currentAngle = controlledBlock.getAngle();
-        float leftBoarder = 0;
-        float rightBoarder = camera.viewportWidth;
-        if(currentX > rightBoarder){
-            controlledBlock.setTransform(rightBoarder, currentY, currentAngle);
-            controlledBlock.setLinearVelocity(0,controlledBlock.getLinearVelocity().y);
-        }else if(currentX < 0){
-            controlledBlock.setTransform(leftBoarder, currentY, currentAngle);
-            controlledBlock.setLinearVelocity(0,controlledBlock.getLinearVelocity().y);
-        }
-        if(currentY < -5){
-            controlledBlock.setTransform(startingPosition, currentAngle);
-            controlledBlock.setLinearVelocity(0,0);
+        BuildingBlock controlledBlock = blocks.get(blockCounter-1);
+        Body controlledBlockBody = controlledBlock.getBody();
+        float currentX = controlledBlockBody.getPosition().x;
+        float currentY = controlledBlockBody.getPosition().y;
+        float leftBoarder = -10;
+        float rightBoarder = camera.viewportWidth + 20;
+        float upperBoarder = getTowerHeight() + 30;
+        float lowerBoarder = -20;
+        if(currentX > rightBoarder || currentX < leftBoarder || currentY > upperBoarder || currentY < lowerBoarder){
+            controlledBlock.respawn(startingPosition);
         }
     }
 
@@ -170,17 +162,18 @@ public class GameLogicManager {
     }
 
     public void updateHUD(SpriteBatch batch){
-        int placedBlockCounter = 0;
+        textManager.drawText(batch, getTowerHeight(), blockCounter-1);
+    }
+
+    private float getTowerHeight(){
         float maxHeight = 0;
         for(BuildingBlock block: blocks){
             if(block.isPlaced()){
-                placedBlockCounter++;
                 if(block.getBody().getPosition().y > maxHeight)
                     maxHeight = block.getBody().getPosition().y;
             }
         }
-        textManager.updateStatistics(maxHeight, placedBlockCounter);
-        textManager.drawStatistics(batch);
+        return maxHeight;
     }
 
     public void drawTextures(SpriteBatch batch){

@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.ParticleEffectPool;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.utils.Array;
@@ -16,15 +17,37 @@ import com.badlogic.gdx.utils.Array;
 public class EffectManager {
     private static final String EFFECTS_DIRECTORY = "";
     private static final String DUST = "dust.p";
+    private static final String FIREWORKS = "fireworks.p";
     private Array<ParticleEffectPool.PooledEffect> effects;
-    private ParticleEffectPool dustEffectPool;
-    private ParticleEffect dustEffect;
+    private ParticleEffectPool dustEffectPool, fireworksEffectPool;
+    private ParticleEffect dustEffect, fireworksEffect;
+    private Vector2[] fireworksPositions = {
+            new Vector2(Gdx.graphics.getWidth()/4, Gdx.graphics.getHeight()/4),
+            new Vector2(Gdx.graphics.getWidth()/4, (Gdx.graphics.getHeight()/4)*3),
+            new Vector2((Gdx.graphics.getWidth()/4)*3, (Gdx.graphics.getHeight()/4)*3),
+            new Vector2((Gdx.graphics.getWidth()/4)*3, (Gdx.graphics.getHeight()/4)),
+    };
+    private static boolean isCreated;
+    private static EffectManager manager;
 
-    public EffectManager() {
+    public static EffectManager getEffectManager(){
+        if(isCreated){
+            return manager;
+        }else{
+            manager = new EffectManager();
+            return manager;
+        }
+    }
+
+    private EffectManager() {
         effects = new Array<ParticleEffectPool.PooledEffect>();
         dustEffect = new ParticleEffect();
         dustEffect.load(Gdx.files.internal(DUST), Gdx.files.internal(EFFECTS_DIRECTORY));
         dustEffectPool = new ParticleEffectPool(dustEffect, 1, 20);
+        fireworksEffect = new ParticleEffect();
+        fireworksEffect.load(Gdx.files.internal(FIREWORKS), Gdx.files.internal(EFFECTS_DIRECTORY));
+        fireworksEffectPool = new ParticleEffectPool(fireworksEffect, 1, 5);
+        isCreated = true;
     }
 
     public void drawEffects(SpriteBatch batch){
@@ -45,6 +68,14 @@ public class EffectManager {
             Vector3 projected = camera.project(contactPosition);
             ParticleEffectPool.PooledEffect effect = dustEffectPool.obtain();
             effect.setPosition(projected.x, projected.y);
+            effects.add(effect);
+        }
+    }
+
+    public void addFireworksEffectToPool(){
+        for(int i=0; i < 4; ++i){
+            ParticleEffectPool.PooledEffect effect = fireworksEffectPool.obtain();
+            effect.setPosition(fireworksPositions[i].x, fireworksPositions[i].y);
             effects.add(effect);
         }
     }

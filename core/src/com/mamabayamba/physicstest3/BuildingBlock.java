@@ -3,6 +3,7 @@ package com.mamabayamba.physicstest3;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -42,5 +43,10 @@ public class BuildingBlock {
         sprite.setPosition(projectedBodyPosition.x - sprite.getWidth()/2, projectedBodyPosition.y - sprite.getHeight()/2);
         sprite.setRotation((float) Math.toDegrees(body.getAngle()));
         return sprite;
+    }
+
+    public void respawn(Vector2 position){
+        body.setTransform(position, body.getAngle());
+        body.setLinearVelocity(0,0);
     }
 }

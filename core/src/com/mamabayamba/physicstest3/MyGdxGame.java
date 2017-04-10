@@ -34,10 +34,7 @@ public class MyGdxGame extends ApplicationAdapter implements ContactListener {
     private SpriteBatch batch;
     private Box2DDebugRenderer renderer;
     private World world;
-    private float padding;
 
-    private BitmapFont font;
-    private GlyphLayout layout;
 
 	@Override
 	public void create () {
@@ -49,7 +46,6 @@ public class MyGdxGame extends ApplicationAdapter implements ContactListener {
 		w = Gdx.graphics.getWidth();
 		h = Gdx.graphics.getHeight();
 		pixelsInMeters = w / X_METERS;
-        padding = pixelsInMeters;
 		yMeters = h / pixelsInMeters;
 		Gdx.app.log("happy: ", X_METERS+"; "+yMeters);
 		camera = new OrthographicCamera(w/ pixelsInMeters, (h/ pixelsInMeters));
@@ -57,7 +53,7 @@ public class MyGdxGame extends ApplicationAdapter implements ContactListener {
 		camera.update();
 		factory = new ObjectFactory(world, camera);
 		gameLogicManager = new GameLogicManager(world, camera);
-        effectManager = new EffectManager();
+        effectManager = EffectManager.getEffectManager();
         world.setContactListener(this);
 		gameLogicManager.newGame();
 	}
@@ -83,7 +79,7 @@ public class MyGdxGame extends ApplicationAdapter implements ContactListener {
 
 		batch.end();
 		////
-		world.step(1/60f, 6, 2);
+		world.step(1/60f, 30, 30);
 		gameLogicManager.checkIfNewGameNeeded();
 		if(gameLogicManager.isNewGameNeeded()){
 			gameLogicManager.endGame();
