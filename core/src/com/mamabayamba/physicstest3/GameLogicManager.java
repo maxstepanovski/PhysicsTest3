@@ -3,6 +3,7 @@ package com.mamabayamba.physicstest3;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -10,9 +11,6 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 /**
  * Created by макс on 28.03.2017.
@@ -26,9 +24,10 @@ public class GameLogicManager {
     private Camera camera;
     private Array<BuildingBlock> blocks;
     private Array<BuildingBlock> miscellaneous;
+    private Sprite background;
     private BuildingBlock flyingIsland, startingIsland;
     private ObjectFactory factory;
-    private VisualManager visualManager;
+    private TextManager textManager;
     private int blockCounter;
     private boolean newGameNeeded;
 
@@ -36,13 +35,17 @@ public class GameLogicManager {
     public GameLogicManager(World world, Camera camera){
         this.world = world;
         this.camera = camera;
-        this.factory = new ObjectFactory(world);
-        this.visualManager = new VisualManager(camera);
+        this.factory = new ObjectFactory(world, camera);
+        this.textManager = new TextManager();
         this.newGameNeeded = false;
         blocks = new Array<BuildingBlock>();
         miscellaneous = new Array<BuildingBlock>();
         blockCounter = 0;
         startingPosition = new Vector2(camera.viewportWidth/2 + 15, 5);
+        this.background = new Sprite(new Texture(Gdx.files.internal("sky.png")));
+        this.background.setPosition(0,0);
+        this.background.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
     }
 
     public void newGame(){
@@ -56,7 +59,6 @@ public class GameLogicManager {
         miscellaneous.add(flyingIsland);
         startingIsland = factory.createGround(startingPosition.x, 0, 2, 1);
         miscellaneous.add(startingIsland);
-        visualManager.createStatisticsHUD();
     }
 
     public void endGame(){
@@ -71,21 +73,22 @@ public class GameLogicManager {
         if(miscellaneous.size > 0)
             miscellaneous.clear();
         blockCounter = 0;
-        visualManager.dispose();
     }
 
     public void checkIfAllBlocksPlaced(){
         Array<Contact> contacts = world.getContactList();
         boolean onStartingPosition = false;
         BuildingBlock controlledBlock = blocks.get(blockCounter-1);
-        for(Contact contact: contacts){
-            if( (contact.getFixtureA().getBody().equals(controlledBlock.getBody()) || contact.getFixtureB().getBody().equals(controlledBlock.getBody()) ) &&
-                    (contact.getFixtureA().getBody().equals(startingIsland.getBody()) || contact.getFixtureB().getBody().equals(startingIsland.getBody())) ){
-                onStartingPosition = true;
+        if(!controlledBlock.getBody().isAwake()){
+            for(Contact contact: contacts){
+                if( (contact.getFixtureA().getBody().equals(controlledBlock.getBody()) || contact.getFixtureB().getBody().equals(controlledBlock.getBody()) ) &&
+                        (contact.getFixtureA().getBody().equals(startingIsland.getBody()) || contact.getFixtureB().getBody().equals(startingIsland.getBody())) ){
+                    onStartingPosition = true;
+                }
             }
-        }
-        if(!controlledBlock.getBody().isAwake() && !onStartingPosition){
-            controlledBlock.setPlaced(true);
+            if(!onStartingPosition){
+                controlledBlock.setPlaced(true);
+            }
         }
     }
 
@@ -109,25 +112,22 @@ public class GameLogicManager {
             blocks.add(factory.createBlock(startingPosition.x, startingPosition.y));
             blockCounter++;
         }
+        if(placedBlocks%2 == 0){
+            textManager.setBlockSign(placedBlocks);
+        }
     }
 
     public void checkBoarders(){
-        Body controlledBlock = blocks.get(blockCounter-1).getBody();
-        float currentX = controlledBlock.getPosition().x;
-        float currentY = controlledBlock.getPosition().y;
-        float currentAngle = controlledBlock.getAngle();
-        float leftBoarder = 0;
-        float rightBoarder = camera.viewportWidth;
-        if(currentX > rightBoarder){
-            controlledBlock.setTransform(rightBoarder, currentY, currentAngle);
-            controlledBlock.setLinearVelocity(0,controlledBlock.getLinearVelocity().y);
-        }else if(currentX < 0){
-            controlledBlock.setTransform(leftBoarder, currentY, currentAngle);
-            controlledBlock.setLinearVelocity(0,controlledBlock.getLinearVelocity().y);
-        }
-        if(currentY < -5){
-            controlledBlock.setTransform(startingPosition, currentAngle);
-            controlledBlock.setLinearVelocity(0,0);
+        BuildingBlock controlledBlock = blocks.get(blockCounter-1);
+        Body controlledBlockBody = controlledBlock.getBody();
+        float currentX = controlledBlockBody.getPosition().x;
+        float currentY = controlledBlockBody.getPosition().y;
+        float leftBoarder = -10;
+        float rightBoarder = camera.viewportWidth + 20;
+        float upperBoarder = getTowerHeight() + 30;
+        float lowerBoarder = -20;
+        if(currentX > rightBoarder || currentX < leftBoarder || currentY > upperBoarder || currentY < lowerBoarder){
+            controlledBlock.respawn(startingPosition);
         }
     }
 
@@ -161,34 +161,28 @@ public class GameLogicManager {
         this.newGameNeeded = newGameNeeded;
     }
 
-    public void updateHUD(){
-        int placedBlockCounter = 0;
+    public void updateHUD(SpriteBatch batch){
+        textManager.drawText(batch, getTowerHeight(), blockCounter-1);
+    }
+
+    private float getTowerHeight(){
         float maxHeight = 0;
         for(BuildingBlock block: blocks){
             if(block.isPlaced()){
-                placedBlockCounter++;
                 if(block.getBody().getPosition().y > maxHeight)
                     maxHeight = block.getBody().getPosition().y;
             }
         }
-        visualManager.updateStatisticsHUD((float) round(maxHeight,1), placedBlockCounter);
+        return maxHeight;
     }
 
-    public static double round(double value, int places) {
-        if (places < 0) throw new IllegalArgumentException();
-
-        BigDecimal bd = new BigDecimal(value);
-        bd = bd.setScale(places, RoundingMode.HALF_UP);
-        return bd.doubleValue();
+    public void drawTextures(SpriteBatch batch){
+        background.draw(batch);
+        for(BuildingBlock block: miscellaneous){
+            block.getActualSprite().draw(batch);
+        }
+        for(BuildingBlock block: blocks){
+            block.getActualSprite().draw(batch);
+        }
     }
-
-    public void updateTextures(){
-        visualManager.updateVisuals(miscellaneous);
-        visualManager.updateVisuals(blocks);
-    }
-
-    public void drawVisuals(){
-        visualManager.draw();
-    }
-
 }
